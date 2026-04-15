@@ -4,19 +4,32 @@ export default class Elevator {
     this.stops = 0
     this.floorsTraversed = 0
     this.requests = []
-    this.riders= []
+    this.riders = []
   }
 
-  dispatch(){
-    this.requests.forEach(request => {
-      if(this.riders.length || this.requests.length){
-        this.goToFloor(request)
-      }
-    })
+  dispatch(currentTime = new Date()){
+    while (this.requests.length) {
+      const request = this.requests[0]
+      this.goToFloor(request, currentTime)
+    }
+
+    if (this.checkReturnToLobby(currentTime)) {
+      this.returnToLobby()
+    }
   }
 
-  goToFloor(person){  
-    // add your code here
+  goToFloor(person, currentTime = new Date()){
+    this.moveToFloor(person.currentFloor)
+
+    this.hasPickup()
+
+    this.moveToFloor(person.dropOffFloor)
+
+    this.hasDropoff()
+
+    if (this.checkReturnToLobby(currentTime)) {
+      this.returnToLobby()
+    }
   }
 
   moveUp(){
@@ -38,23 +51,67 @@ export default class Elevator {
   }
 
   hasStop(){
-    // add your code here
+    const nextPickup = this.requests[0]
+    const nextDropoff = this.riders[0]
+
+    if (nextDropoff) {
+      return nextDropoff.dropOffFloor === this.currentFloor
+    }
+
+    return Boolean(nextPickup) && nextPickup.currentFloor === this.currentFloor
   }
 
   hasPickup(){
-    // add your code here
+    const nextPickup = this.requests[0]
+
+    if (nextPickup && nextPickup.currentFloor === this.currentFloor) {
+      this.requests.shift()
+      this.riders.push(nextPickup)
+      return true
+    }
+
+    return false
   }
 
   hasDropoff(){
-    // add your code here
+    const nextDropoff = this.riders[0]
+
+    if (nextDropoff && nextDropoff.dropOffFloor === this.currentFloor) {
+      this.riders.shift()
+      return true
+    }
+
+    return false
   }
 
-  checkReturnToLoby(){
-    // add your code here
+  checkReturnToLobby(currentTime = new Date()){
+    return (
+      !this.riders.length &&
+      !this.requests.length &&
+      currentTime.getHours() < 12
+    )
+  }
+
+  checkReturnToLoby(currentTime = new Date()){
+    return this.checkReturnToLobby(currentTime)
+  }
+
+  returnToLobby(){
+    while (this.currentFloor > 0) {
+      this.moveDown()
+    }
   }
 
   returnToLoby(){
-    while(this.currentFloor > 0){
+    this.returnToLobby()
+  }
+
+  moveToFloor(targetFloor){
+    while (this.currentFloor < targetFloor) {
+      this.moveUp()
+    }
+
+    while (this.currentFloor > targetFloor) {
       this.moveDown()
     }
   }
@@ -63,6 +120,7 @@ export default class Elevator {
     this.currentFloor = 0
     this.stops = 0
     this.floorsTraversed = 0
+    this.requests = []
     this.riders = []
   }
 }
